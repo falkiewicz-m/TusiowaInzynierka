@@ -43,14 +43,15 @@ def getNewEye(list):
 # @returns image 	Image with isolated iris + black-painted pupil
 def getIris(frame):
 	iris = []
-	copyImg = cv.CloneImage(frame)
-	resImg = cv.CloneImage(frame)
-	grayImg = cv.CreateImage(cv.GetSize(frame), 8, 1)
-	mask = cv.CreateImage(cv.GetSize(frame), 8, 1)
-	storage = cv.CreateMat(frame.width, 1, cv.CV_32FC3)
-	cv.CvtColor(frame,grayImg,cv.CV_BGR2GRAY)
-	cv.Canny(grayImg, grayImg, 5, 70, 3)
-	cv.Smooth(grayImg,grayImg,cv.CV_GAUSSIAN, 7, 7)
+	copyImg = frame.copy()
+	resImg = frame.copy()
+	grayImg = frame.copy()
+	grayImg = cv2.cvtColor(grayImg, cv2.COLOR_BGR2GRAY)
+	grayImg = cv2.Canny(grayImg, 5, 70)
+	grayImg = cv2.GaussianBlur(grayImg, (7,7), 0)
+	mask = frame.copy()
+	mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
+	storage = np.ndarray(shape=(frame.shape[0], frame.shape[1]))
 	circles = getCircles(grayImg)
 	iris.append(resImg)
 	for circle in circles:
@@ -80,8 +81,9 @@ def getIris(frame):
 def getCircles(image):
 	i = 80
 	while i < 151:
-		storage = cv.CreateMat(image.width, 1, cv.CV_32FC3)
-		cv.HoughCircles(image, storage, cv.CV_HOUGH_GRADIENT, 2, 100.0, 30, i, 100, 140)
+		# storage = cv.CreateMat(image.width, 1, cv.CV_32FC3)
+		storage = np.ndarray(shape=(image.shape[0], image.shape[1]))
+		cv2.HoughCircles(image, cv2.HOUGH_GRADIENT, 2, 100.0, 30.0, 100, 140)
 		circles = np.asarray(storage)
 		if (len(circles) == 1):
 			return circles
@@ -142,12 +144,12 @@ while True:
 	iris = frame.copy()
 	output = getPupil(frame)
 	iris = getIris(output)
-	cv.ShowImage("input", frame)
-	cv.ShowImage("output", iris)
-	normImg = cv.CloneImage(iris)
-	normImg = getPolar2CartImg(iris,radius)
-	cv.ShowImage("normalized", normImg)
-	key = cv.WaitKey(3000)
+	cv2.imshow('input',frame)
+	cv2.imshow('output',iris)
+	normImg = iris.copy()
+	# normImg = getPolar2CartImg(iris,radius)
+	# cv.ShowImage("normalized", normImg)
+	key = cv2.waitKey(3000)
 	# seems like Esc with NumLck equals 1048603
 	if (key == 27 or key == 1048603):
 		break
