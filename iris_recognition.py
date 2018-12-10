@@ -55,22 +55,22 @@ def getIris(frame):
 	# cv2.imshow('c', circles)
 	# cv2.imshow('resImg', resImg)
 	iris.append(resImg)
-	for circle in circles:
-		rad = int(circle[2])
-		print(rad)
-		global radius
-		radius = rad
-		cv2.circle(grayImg, centroid, rad, (255,255,255), cv2.FILLED)
-		# cv2.Not(mask,mask)
-		# cv2.subtract(frame,copyImg,resImg,mask)
-		x = int(centroid[0] - rad)
-		y = int(centroid[1] - rad)
-		w = int(rad * 2)
-		h = w
-		resImg = frame[x:y, w:h]
-		cropImg = resImg.copy()
-		return(cropImg)
-	return (resImg)
+	# for circle in circles:
+	# 	rad = int(circle[2])
+	# 	print(rad)
+	# 	global radius
+	# 	radius = rad
+	# 	cv2.circle(grayImg, centroid, rad, (255,255,255), cv2.FILLED)
+	# 	# cv2.Not(mask,mask)
+	# 	# cv2.subtract(frame,copyImg,resImg,mask)
+	# 	x = int(centroid[0] - rad)
+	# 	y = int(centroid[1] - rad)
+	# 	w = int(rad * 2)
+	# 	h = w
+	# 	resImg = frame[x:y, w:h]
+	# 	cropImg = resImg.copy()
+	# 	return(cropImg)
+	# return (resImg)
 
 # Search middle to big circles using the Hough Transform function
 # and loop for testing values in the range [80,150]. When a circle is found,
@@ -83,7 +83,7 @@ def getCircles(image):
 	while i < 151:
 		# storage = cv.CreateMat(image.width, 1, cv.CV_32FC3)
 		# storage = np.ndarray(shape=(image.shape[0], image.shape[1]))
-		circles = cv2.HoughCircles(image, cv2.HOUGH_GRADIENT, 2, 30.0)
+		circles = cv2.HoughCircles(image, cv2.HOUGH_GRADIENT, 2, 240.0)
 		circles = np.round(circles[0,:]).astype("int")
 		if (len(circles) == 1):
 			return circles
@@ -100,12 +100,13 @@ def getPupil(frame):
 
 	cv2.imshow('in', frame)
 	pupilImg = frame.copy()
-	cv2.inRange(frame, (30,30,30), (80,80,80), pupilImg)
+	# cv2.inRange(frame, (240,240,240), (255,255,255), pupilImg)
 	pupilImg = cv2.cvtColor(pupilImg, cv2.COLOR_BGR2GRAY)
-	_, thresh = cv2.threshold(pupilImg, 127, 255, 0)
-	im2, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
-	cv2.drawContours(pupilImg, contours, -1, (0,255,255), 3)
-	# cv2.imshow('out', pupilImg)
+	_, thresh = cv2.threshold(pupilImg, 80, 150, 0)
+	im2, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_LIST,cv2.CHAIN_APPROX_TC89_KCOS)
+	cv2.drawContours(thresh, contours, -1, (0,255,255), 2)
+	cv2.imshow('threshold', thresh)
+	cv2.imshow('out', pupilImg)
 	# cnt = contours[0]
 	# momnt = cv2.moments(cnt)
 	# x = momnt['m10']/momnt['m00']
@@ -118,13 +119,14 @@ def getPupil(frame):
 		area = moments['m00']
 		if (area > 50):
 			pupilArea = area
-			x = moments['m10']/area
-			y = moments['m01']/area
+			x = int(moments['m10']/area)
+			y = int(moments['m01']/area)
 			pupil = contours
 			global centroid
 			centroid = (int(x),int(y))
-			cv2.drawContours(pupilImg, pupil, 0,0 , cv2.FILLED, 8, hierarchy)
-			# cv2.imshow('petla', pupilImg)
+			cv2.circle(pupilImg, (x,y), 60, (0,255,0), 1)
+			# cv2.drawContours(pupilImg, pupil, -1, (0,0,255), 1)
+			cv2.imshow('petla', pupilImg)
 			break
 		contours = contours.h_next()
 	return (pupilImg)
@@ -141,21 +143,21 @@ def getPolar2CartImg(image, rad):
 	cv.LogPolar(image,imgRes,c,60.0, cv.CV_INTER_LINEAR+cv.CV_WARP_FILL_OUTLIERS)
 	return (imgRes)
 
-# eyesList = os.listdir('images/eyes')
+eyesList = os.listdir('images/eyes')
 key = 0
 while True:
-
-	frame = cv2.imread("images/eyes/16")
+	eye = getNewEye(eyesList)
+	frame = cv2.imread("images/eyes/"+eye)
 	iris = frame.copy()
 	output = getPupil(frame)
-	iris = getIris(output)
+	# iris = getIris(output)
 	print(iris)
-	cv2.imshow('input',frame)
-	cv2.imshow('output',iris)
+	# cv2.imshow('input',frame)
+	# cv2.imshow('output',iris)
 	normImg = iris.copy()
 	# normImg = getPolar2CartImg(iris,radius)
 	# cv.ShowImage("normalized", normImg)
-	key = cv2.waitKey(3000) & 0xFF
+	key = cv2.waitKey(24000) & 0xFF
 	# seems like Esc with NumLck equals 1048603
 	if (key == 27 or key == 1048603):
 		break
